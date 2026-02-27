@@ -1,9 +1,8 @@
 # Ignore all images
-cbd-human-eval.github.io/images/
+images/
 
 # Ignore all class to species txt files
-cbd-human-eval.github.io/class_to_species/
+class_to_species/
 
 # Ignore all descriptor files
-cbd-human-eval.github.io/descriptors/
-config.js
+descriptors/

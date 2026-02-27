@@ -3,32 +3,631 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Matching Evaluation</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Species Classification Browser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .main-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .image-viewer {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 8px;
+            min-height: 400px;
+            overflow: hidden;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #667eea;
+            color: white;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .image-counter {
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+        }
+
+        .thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail:hover {
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .thumbnail.active {
+            border-color: #764ba2;
+            box-shadow: 0 0 8px rgba(118, 75, 162, 0.5);
+        }
+
+        .species-nav {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .species-btn {
+            padding: 8px 14px;
+            font-size: 0.85em;
+            min-width: 40px;
+        }
+
+        .species-btn.active {
+            background: #764ba2;
+            font-weight: bold;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .descriptor-panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .descriptor-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .descriptor-list {
+            list-style: none;
+        }
+
+        .descriptor-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+            font-size: 0.95em;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .other-species {
+            max-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .species-item {
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            border-left: 3px solid #667eea;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+        }
+
+        .species-item:hover {
+            background: #f0f2ff;
+            border-left-color: #764ba2;
+            transform: translateX(5px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #c00;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .image-container {
+                min-height: 300px;
+            }
+        }
+
+        .species-label {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .class-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Image Classification Evaluation</h1>
-        
-        <div class="content">
-            <div class="image-section">
-                <img id="evaluationImage" src="" alt="Image to evaluate">
-                <p id="imageName" class="image-name"></p>
-                <div id="otherSpecies"></div>
-            </div>
-            
-            <div class="questions-section">
-                <div id="questionsContainer"></div>
-                <button id="submitBtn" class="submit-btn">Submit Answers</button>
-            </div>
+        <div class="header">
+            <h1>🔬 Species Classification Browser</h1>
+            <p>Explore species with detailed descriptors and images</p>
         </div>
-        
-        <div id="successMessage" class="success-message" style="display: none;">
-            ✓ Answers submitted successfully!
+
+        <div class="content" id="content">
+            <div class="loading">Loading data...</div>
         </div>
     </div>
 
-    <script src="config.js"></script>
-    <script src="app.js"></script>
+    <script>
+        let allData = {
+            classToSpecies: {},
+            descriptors: {},
+            imageMap: {}
+        };
+
+        let currentSpeciesIndex = 0;
+        let allSpeciesList = [];
+        let currentSpecies = null;
+        let currentImageIndex = 0;
+
+        async function initializeApp() {
+            try {
+                // Load class to species mapping
+                await loadClassToSpecies();
+
+                // Get all unique species
+                allSpeciesList = Object.values(allData.classToSpecies)
+                    .flat()
+                    .filter((v, i, a) => a.indexOf(v) === i)
+                    .sort();
+
+                // Load descriptors for all species
+                await loadAllDescriptors();
+
+                // Build image map
+                buildImageMap();
+
+                if (allSpeciesList.length > 0) {
+                    currentSpeciesIndex = 0;
+                    loadSpecies(0);
+                    renderApp();
+                } else {
+                    showError('No species data found');
+                }
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Error loading application: ' + error.message);
+            }
+        }
+
+        async function loadClassToSpecies() {
+            const files = ['Agaricomycetes', 'Bivalvia', 'Ulvophyceae'];
+            
+            for (const file of files) {
+                try {
+                    const response = await fetch(`class_to_species/${file}.txt`);
+                    const text = await response.text();
+                    const species = text
+                        .split('\n')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0);
+                    
+                    allData.classToSpecies[file] = species;
+                } catch (error) {
+                    console.warn(`Could not load ${file}.txt:`, error);
+                }
+            }
+        }
+
+        async function loadAllDescriptors() {
+            for (const species of allSpeciesList) {
+                try {
+                    const filename = species.toLowerCase().replace(/\s+/g, '_');
+                    const response = await fetch(`descriptors/${filename}.json`);
+                    if (response.ok) {
+                        allData.descriptors[species] = await response.json();
+                    }
+                } catch (error) {
+                    console.warn(`Could not load descriptors for ${species}:`, error);
+                }
+            }
+        }
+
+        function buildImageMap() {
+            allSpeciesList.forEach(species => {
+                const dirname = species.toLowerCase().replace(/\s+/g, '_');
+                allData.imageMap[species] = {
+                    dirname: dirname,
+                    images: [] // Will be populated dynamically
+                };
+            });
+        }
+
+        async function loadSpeciesImages(species) {
+            const dirname = allData.imageMap[species].dirname;
+            
+            // Try to load image list or build it from known structure
+            // Since we can't list directories directly, we'll try to load from a manifest
+            // or attempt to load images and check if they exist
+            
+            // For now, we'll return an empty array and let the rendering handle it
+            const images = [];
+            
+            // Try to detect images by attempting to load them
+            for (let i = 0; i < 50; i++) {
+                const imageName = `${i.toString().padStart(2, '0')}.jpg`;
+                const imagePath = `images/${dirname}/${imageName}`;
+                
+                try {
+                    const response = await fetch(imagePath, { method: 'HEAD' });
+                    if (response.ok) {
+                        images.push(imagePath);
+                    }
+                } catch (error) {
+                    // Image doesn't exist, continue
+                }
+            }
+            
+            return images;
+        }
+
+        function loadSpecies(index) {
+            currentSpeciesIndex = index;
+            currentSpecies = allSpeciesList[index];
+            currentImageIndex = 0;
+        }
+
+        function getSpeciesClass(species) {
+            for (const [className, speciesList] of Object.entries(allData.classToSpecies)) {
+                if (speciesList.includes(species)) {
+                    return className;
+                }
+            }
+            return 'Unknown';
+        }
+
+        function getOtherSpeciesInClass(species) {
+            const className = getSpeciesClass(species);
+            return allData.classToSpecies[className]
+                .filter(s => s !== species)
+                .sort();
+        }
+
+        function renderApp() {
+            const content = document.getElementById('content');
+            
+            const mainHTML = `
+                <div class="main-section">
+                    <div class="image-viewer">
+                        <div class="species-label">${currentSpecies.replace(/_/g, ' ')}</div>
+                        <div class="class-label">Class: ${getSpeciesClass(currentSpecies)}</div>
+                        
+                        <div class="image-container">
+                            <div id="imageDisplay" style="text-align: center; width: 100%;">
+                                <p style="color: #999;">Loading images...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="image-counter">
+                            Image <span id="imageNum">0</span> of <span id="imageTotal">0</span>
+                        </div>
+                        
+                        <div class="image-controls">
+                            <button class="btn" id="prevBtn" onclick="previousImage()">← Previous</button>
+                            <button class="btn" id="nextBtn" onclick="nextImage()">Next →</button>
+                        </div>
+                        
+                        <div id="imageButtonGrid" style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;"></div>
+                        
+                        <div id="thumbnailGrid" class="thumbnail-grid"></div>
+                    </div>
+                    
+
+                </div>
+            `;
+            
+            const descriptors = allData.descriptors[currentSpecies] || [];
+            const otherSpecies = getOtherSpeciesInClass(currentSpecies);
+            
+            const sidebarHTML = `
+                <div class="sidebar">
+                    <div class="descriptor-panel">
+                        <h3>📋 Descriptors</h3>
+                        <ul class="descriptor-list">
+                            ${descriptors.map(d => `<li class="descriptor-item">${d}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="descriptor-panel">
+                        <h3>🔗 Other Species in Class</h3>
+                        <div class="other-species">
+                            ${otherSpecies.map((s, idx) => `
+                                <div class="species-item" onclick="selectSpecies(${allSpeciesList.indexOf(s)})">
+                                    ${s.replace(/_/g, ' ')}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = `
+                <div class="content" style="display: grid; grid-template-columns: 1fr 400px; gap: 30px; padding: 30px; min-height: 600px;">
+                    ${mainHTML}
+                    ${sidebarHTML}
+                </div>
+            `;
+            
+            renderSpeciesNavigation();
+            loadAndDisplayImages();
+        }
+
+        function renderSpeciesNavigation() {
+            // Species navigation removed - numbered buttons now for images
+        }
+
+        async function loadAndDisplayImages() {
+            const imageDisplay = document.getElementById('imageDisplay');
+            const dirname = allData.imageMap[currentSpecies].dirname;
+            
+            try {
+                // Try to load images from the server
+                const images = [];
+                let imageIndex = 1;
+                
+                // Try common naming patterns
+                while (images.length < 100) {
+                    const patterns = [
+                        `images/${dirname}/${imageIndex.toString().padStart(2, '0')}.jpg`,
+                        `images/${dirname}/image_${imageIndex}.jpg`,
+                        `images/${dirname}/${imageIndex}.jpg`,
+                    ];
+                    
+                    let found = false;
+                    for (const pattern of patterns) {
+                        try {
+                            const response = await fetch(pattern, { method: 'HEAD' });
+                            if (response.ok) {
+                                images.push(pattern);
+                                found = true;
+                                break;
+                            }
+                        } catch (error) {
+                            // Continue trying other patterns
+                        }
+                    }
+                    
+                    if (!found) break;
+                    imageIndex++;
+                }
+                
+                // If no images found with numbered names, try UUID-style names
+                if (images.length === 0) {
+                    // List all files in the images directory by trying to load them
+                    const response = await fetch(`images/${dirname}/`);
+                    if (response.ok) {
+                        const text = await response.text();
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(text, 'text/html');
+                        const links = doc.querySelectorAll('a');
+                        links.forEach(link => {
+                            const href = link.getAttribute('href');
+                            if (href && href.endsWith('.jpg')) {
+                                images.push(`images/${dirname}/${href}`);
+                            }
+                        });
+                    }
+                }
+                
+                allData.imageMap[currentSpecies].images = images;
+                
+                if (images.length === 0) {
+                    imageDisplay.innerHTML = '<p style="color: #999;">No images found</p>';
+                    document.getElementById('imageTotal').textContent = '0';
+                    document.getElementById('prevBtn').disabled = true;
+                    document.getElementById('nextBtn').disabled = true;
+                } else {
+                    displayImage();
+                    renderThumbnails();
+                }
+            } catch (error) {
+                console.error('Error loading images:', error);
+                imageDisplay.innerHTML = '<p style="color: #c00;">Error loading images</p>';
+            }
+        }
+
+        function displayImage() {
+            const images = allData.imageMap[currentSpecies].images;
+            if (images.length === 0) return;
+            
+            const imageDisplay = document.getElementById('imageDisplay');
+            const image = images[currentImageIndex];
+            
+            imageDisplay.innerHTML = `<img src="${image}" alt="Species image" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+            document.getElementById('imageNum').textContent = currentImageIndex + 1;
+            document.getElementById('imageTotal').textContent = images.length;
+            
+            document.getElementById('prevBtn').disabled = currentImageIndex === 0;
+            document.getElementById('nextBtn').disabled = currentImageIndex === images.length - 1;
+        }
+
+        function renderThumbnails() {
+            const images = allData.imageMap[currentSpecies].images;
+            const grid = document.getElementById('thumbnailGrid');
+            if (!grid || images.length === 0) return;
+            
+            grid.innerHTML = images.map((img, idx) => `
+                <div class="thumbnail ${idx === currentImageIndex ? 'active' : ''}" onclick="selectImage(${idx})">
+                    <img src="${img}" alt="Thumbnail ${idx + 1}">
+                </div>
+            `).join('');
+            
+            // Render numbered image buttons
+            const imageButtonGrid = document.getElementById('imageButtonGrid');
+            if (imageButtonGrid && images.length > 0) {
+                imageButtonGrid.innerHTML = images.map((img, idx) => `
+                    <button class="btn species-btn ${idx === currentImageIndex ? 'active' : ''}" 
+                            onclick="selectImage(${idx})" 
+                            style="padding: 8px 12px; min-width: 35px; font-size: 0.85em;">
+                        ${idx + 1}
+                    </button>
+                `).join('');
+            }
+        }
+
+        function selectImage(index) {
+            currentImageIndex = index;
+            displayImage();
+            renderThumbnails();
+        }
+
+        function nextImage() {
+            const images = allData.imageMap[currentSpecies].images;
+            if (currentImageIndex < images.length - 1) {
+                selectImage(currentImageIndex + 1);
+            }
+        }
+
+        function previousImage() {
+            if (currentImageIndex > 0) {
+                selectImage(currentImageIndex - 1);
+            }
+        }
+
+        function selectSpecies(index) {
+            loadSpecies(index);
+            currentImageIndex = 0;
+            renderApp();
+        }
+
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
 </body>
 </html>
