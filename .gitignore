@@ -3,6 +3,3 @@ images/
 
 # Ignore all class to species txt files
 class_to_species/
-
-# Ignore all descriptor files
-descriptors/
