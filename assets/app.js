@@ -169,14 +169,14 @@ function setupControls(){
   el("prevBtn").onclick = () => { state.idx--; render(); };
   el("nextBtn").onclick = () => { state.idx++; render(); };
 
-  el("shuffleBtn").onclick = () => {
-    for (let i = state.items.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [state.items[i], state.items[j]] = [state.items[j], state.items[i]];
-    }
-    state.idx = 0;
-    render();
-  };
+  // el("shuffleBtn").onclick = () => {
+  //   for (let i = state.items.length - 1; i > 0; i--){
+  //     const j = Math.floor(Math.random() * (i + 1));
+  //     [state.items[i], state.items[j]] = [state.items[j], state.items[i]];
+  //   }
+  //   state.idx = 0;
+  //   render();
+  // };
 
   window.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") { state.idx--; render(); }
